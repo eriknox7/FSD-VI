@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>PrepTrack - jQuery Mobile</title>
+
+<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0b1020; --card:#151c33; --card2:#1c2545; --line:#273157;
+    --text:#e8ecff; --mute:#8f9bc7; --brand:#7c5cff; --brand2:#22d3ee;
+    --easy:#34d399; --med:#fbbf24; --hard:#f87171;
+  }
+  html,body,.ui-page,.ui-page-theme-a,.ui-page-theme-b{background:var(--bg)!important;color:var(--text)!important;
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;text-shadow:none!important}
+  .ui-content{padding:1em 1em 5.5em}
+  h1,h2,h3,h4,p{text-shadow:none}
+  .ui-header,.ui-footer{background:rgba(11,16,32,.92)!important;border:0!important;backdrop-filter:blur(8px)}
+  .ui-header .ui-title{font-weight:700;letter-spacing:.3px;color:var(--text)!important;margin:0 3em}
+  .ui-header .ui-btn{background:transparent!important;border:0!important;color:var(--text)!important}
+  .ui-footer .ui-navbar{background:transparent}
+  .ui-navbar .ui-btn{background:transparent!important;border:0!important;color:var(--mute)!important;font-size:11px;padding-top:2.4em}
+  .ui-navbar .ui-btn.ui-btn-active{color:var(--brand2)!important;background:rgba(124,92,255,.14)!important;border-radius:12px}
+  .ui-icon-home:after,.ui-icon-grid:after,.ui-icon-plus:after,.ui-icon-gear:after{filter:invert(1)}
+  .ui-navbar .ui-btn.ui-btn-active:after{background-color:var(--brand2)!important}
+
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1em;margin-bottom:1em}
+  .card h3{margin:0 0 .6em;font-size:14px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+  .hero{background:linear-gradient(135deg,#5b3df5 0%,#22d3ee 130%);border:0;position:relative;overflow:hidden}
+  .hero h2{margin:0;font-size:22px;color:#fff}
+  .hero p{margin:.3em 0 0;color:rgba(255,255,255,.85);font-size:13px}
+  .ringwrap{display:flex;align-items:center;gap:1em}
+  .ring{position:relative;width:96px;height:96px;flex:0 0 96px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num b{font-size:22px;color:#fff}.ring .num small{color:rgba(255,255,255,.85);font-size:10px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6em;margin-bottom:1em}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:.8em .4em;text-align:center}
+  .stat b{display:block;font-size:22px}.stat span{font-size:11px;color:var(--mute)}
+  .stat.s1 b{color:var(--easy)}.stat.s2 b{color:var(--med)}.stat.s3 b{color:var(--brand2)}
+
+  .bar{margin:.55em 0}.bar .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-bottom:4px}
+  .bar .track{height:8px;background:var(--card2);border-radius:99px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .6s}
+  .bar.easy .fill{background:var(--easy)}.bar.medium .fill{background:var(--med)}.bar.hard .fill{background:var(--hard)}
+
+  /* problem list */
+  .ui-listview{margin:0}
+  .ui-listview>li{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:16px;margin-bottom:.6em;overflow:hidden}
+  .ui-listview>li>a.ui-btn{background:transparent!important;color:var(--text)!important;white-space:normal;padding:.9em 2.4em .9em 1em;border:0!important}
+  .ui-listview>li>a.ui-btn:after{background-color:var(--mute)!important}
+  .p-title{font-weight:600;font-size:15px;margin-bottom:.35em}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-right:6px;background:var(--card2);color:var(--mute)}
+  .tag.easy{color:var(--easy);background:rgba(52,211,153,.12)}
+  .tag.medium{color:var(--med);background:rgba(251,191,36,.12)}
+  .tag.hard{color:var(--hard);background:rgba(248,113,113,.12)}
+  .tag.solved{color:#fff;background:rgba(52,211,153,.35)}
+  .tag.revisit{color:#fff;background:rgba(251,191,36,.35)}
+  .tag.todo{color:#fff;background:rgba(143,155,199,.3)}
+  .done .p-title{text-decoration:line-through;opacity:.6}
+  .empty{text-align:center;color:var(--mute);padding:2.5em 1em}
+  .empty .big{font-size:42px}
+
+  /* forms */
+  label,.ui-controlgroup-label legend{color:var(--mute)!important;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .ui-input-text,.ui-input-search,.ui-select .ui-btn{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:12px!important;color:var(--text)!important;box-shadow:none!important}
+  .ui-input-text input,.ui-input-text textarea,.ui-input-search input{color:var(--text)!important;background:transparent!important}
+  .ui-input-search:after{background-color:var(--mute)!important}
+  .ui-controlgroup .ui-btn{background:var(--card)!important;border:1px solid var(--line)!important;color:var(--mute)!important}
+  .ui-controlgroup .ui-btn.ui-btn-active,.ui-controlgroup .ui-radio-on{background:var(--brand)!important;color:#fff!important;border-color:var(--brand)!important}
+  .ui-controlgroup .ui-radio-on:after{display:none}
+  .ui-btn.primary{background:linear-gradient(135deg,var(--brand),#5b3df5)!important;color:#fff!important;border:0!important;border-radius:14px;padding:.95em;font-weight:700;box-shadow:0 8px 20px rgba(124,92,255,.35)}
+  .ui-btn.ghost{background:var(--card)!important;color:var(--text)!important;border:1px solid var(--line)!important;border-radius:14px}
+  .ui-btn.danger{background:rgba(248,113,113,.12)!important;color:var(--hard)!important;border:1px solid rgba(248,113,113,.4)!important;border-radius:14px}
+  .ui-flipswitch{background:var(--card2)!important;border-color:var(--line)!important}
+  .ui-slider-track{background:var(--card2)!important;border-color:var(--line)!important}
+  .ui-slider-bg{background:var(--brand)!important}
+  .ui-slider-handle{background:#fff!important;border:0!important}
+  input.ui-slider-input{background:var(--card)!important;color:var(--text)!important;border-color:var(--line)!important}
+
+  /* popup */
+  .ui-popup{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:20px!important;box-shadow:0 20px 50px rgba(0,0,0,.6)!important}
+  .ui-popup-screen.in{opacity:.65}
+  .pop{min-width:260px;padding:1em}
+  .pop h4{margin:0 0 .8em;font-size:15px}
+  .pop .ui-btn{margin:.35em 0}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,30px);background:#fff;color:#0b1020;padding:.7em 1.1em;border-radius:99px;
+    font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:10000;display:flex;gap:.9em;align-items:center;white-space:nowrap}
+  #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  #toast a{color:var(--brand);font-weight:800;text-decoration:none}
+
+  /* FAB */
+  .fab{position:fixed;right:18px;bottom:84px;width:56px;height:56px;border-radius:50%!important;margin:0;padding:0;z-index:900;
+    background:linear-gradient(135deg,var(--brand),var(--brand2))!important;border:0!important;box-shadow:0 10px 25px rgba(124,92,255,.5)}
+  .ui-panel{background:var(--card)!important;border-color:var(--line)!important}
+  .ui-panel .ui-listview>li{background:transparent!important;border:0!important}
+  .ui-panel h3{margin:.6em 0}
+  .ui-panel-inner{padding:1em}
+</style>
+</head>
+<body>
+
+<!-- ======================= DASHBOARD ======================= -->
+<div data-role="page" id="dashboard" data-theme="b">
+  <div data-role="header" data-position="fixed" data-tap-toggle="false">
+    <a href="#menu" class="ui-btn ui-btn-left ui-icon-bars ui-btn-icon-notext">Menu</a>
+    <h1>PrepTrack</h1>
+  </div>
+
+  <div data-role="panel" id="menu" data-display="overlay" data-theme="b">
+    <h3>PrepTrack</h3>
+    <p style="color:var(--mute);font-size:13px">Daily placement Prep tracker.</p>
+    <ul data-role="listview">
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#problems">All Problems</a></li>
+      <li><a href="#settings">Settings</a></li>
+    </ul>
+  </div>
+
+  <div role="main" class="ui-content">
+    <div class="card hero">
+      <div class="ringwrap">
+        <div class="ring">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,.25)" stroke-width="9" fill="none"/>
+            <circle id="ringArc" cx="48" cy="48" r="40" stroke="#fff" stroke-width="9" fill="none"
+                    stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3" style="transition:stroke-dashoffset .8s"/>
+          </svg>
+          <div class="num"><b id="ringNum">0/3</b><small>today</small></div>
+        </div>
+        <div>
+          <h2 id="greet">Hello!</h2>
+          <p id="goalMsg">Aaj ka goal set karo.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat s1"><b id="stSolved">0</b><span>Solved</span></div>
+      <div class="stat s2"><b id="stStreak">0</b><span>Day streak</span></div>
+      <div class="stat s3"><b id="stPending">0</b><span>Pending</span></div>
+    </div>
+
+    <div class="card"><h3>By difficulty (solved)</h3><div id="diffBars"></div></div>
+    <div class="card"><h3>By topic (solved)</h3><div id="topicBars"></div></div>
+
+    <div class="card"><h3>Recently solved</h3>
+      <ul data-role="listview" id="recentList" data-inset="false"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= PROBLEMS ======================= -->
+<div data-role="page" id="problems" data-theme="b">
+  <div data-role="header" data-position="fixed" data-tap-toggle="false">
+    <a href="#menu2" class="ui-btn ui-btn-left ui-icon-bars ui-btn-icon-notext">Menu</a>
+    <h1>Problems</h1>
+  </div>
+  <div data-role="panel" id="menu2" data-display="overlay" data-theme="b">
+    <h3>Jump to</h3>
+    <ul data-role="listview">
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#problems">All Problems</a></li>
+      <li><a href="#settings">Settings</a></li>
+    </ul>
+  </div>
+
+  <div role="main" class="ui-content">
+    <input type="search" id="q" placeholder="Search title or topic...">
+    <div data-role="controlgroup" data-type="horizontal" data-mini="true" id="statusFilter" style="margin-bottom:1em">
+      <a href="#" class="ui-btn ui-btn-active" data-f="all">All</a>
+      <a href="#" class="ui-btn" data-f="todo">Todo</a>
+      <a href="#" class="ui-btn" data-f="revisit">Revisit</a>
+      <a href="#" class="ui-btn" data-f="solved">Solved</a>
+    </div>
+    <ul data-role="listview" id="problemList"></ul>
+    <div id="emptyBox" class="empty" style="display:none">
+      <div class="big">&#128237;</div>
+      <p>No problems found.</p>
+      <a href="#add" class="ui-btn primary ui-corner-all" style="max-width:220px;margin:1em auto">Add problem</a>
+    </div>
+  </div>
+
+  <a href="#add" class="fab ui-btn ui-icon-plus ui-btn-icon-notext" id="fabAdd">Add</a>
+
+  <!-- action popup -->
+  <div data-role="popup" id="actions" data-overlay-theme="b" data-dismissible="true">
+    <div class="pop">
+      <h4 id="actTitle">Problem</h4>
+      <a href="#" class="ui-btn primary ui-corner-all" data-act="solved">Mark as Solved</a>
+      <a href="#" class="ui-btn ghost ui-corner-all" data-act="revisit">Mark for Revisit</a>
+      <a href="#" class="ui-btn ghost ui-corner-all" data-act="todo">Move to Todo</a>
+      <a href="#" class="ui-btn ghost ui-corner-all" data-act="open">Open problem link</a>
+      <a href="#" class="ui-btn ghost ui-corner-all" data-act="edit">Edit</a>
+      <a href="#" class="ui-btn danger ui-corner-all" data-act="delete">Delete</a>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= ADD / EDIT ======================= -->
+<div data-role="page" id="add" data-theme="b">
+  <div data-role="header" data-position="fixed" data-tap-toggle="false">
+    <a href="#problems" class="ui-btn ui-btn-left ui-icon-arrow-l ui-btn-icon-notext">Back</a>
+    <h1 id="addTitle">Add Problem</h1>
+  </div>
+  <div role="main" class="ui-content">
+    <div class="card">
+      <label for="fTitle">Problem title *</label>
+      <input type="text" id="fTitle" placeholder="e.g. Two Sum">
+
+      <label for="fLink">Link (optional)</label>
+      <input type="url" id="fLink" placeholder="https://leetcode.com/problems/...">
+
+      <label for="fTopic">Topic</label>
+      <select id="fTopic">
+        <option>Arrays</option><option>Strings</option><option>Linked List</option>
+        <option>Stack &amp; Queue</option><option>Trees</option><option>Graphs</option>
+        <option>Dynamic Programming</option><option>Recursion</option><option>Sorting &amp; Searching</option>
+        <option>Greedy</option><option>Heap</option><option>Other</option>
+      </select>
+
+      <fieldset data-role="controlgroup" data-type="horizontal" id="fDiff">
+        <legend>Difficulty</legend>
+        <input type="radio" name="diff" id="dEasy" value="easy" checked><label for="dEasy">Easy</label>
+        <input type="radio" name="diff" id="dMed" value="medium"><label for="dMed">Medium</label>
+        <input type="radio" name="diff" id="dHard" value="hard"><label for="dHard">Hard</label>
+      </fieldset>
+
+      <fieldset data-role="controlgroup" data-type="horizontal" id="fStat">
+        <legend>Status</legend>
+        <input type="radio" name="stat" id="sTodo" value="todo" checked><label for="sTodo">Todo</label>
+        <input type="radio" name="stat" id="sRev" value="revisit"><label for="sRev">Revisit</label>
+        <input type="radio" name="stat" id="sSol" value="solved"><label for="sSol">Solved</label>
+      </fieldset>
+
+      <label for="fNotes">Notes / approach</label>
+      <textarea id="fNotes" placeholder="Key idea, time complexity, mistakes..."></textarea>
+
+      <a href="#" id="btnSave" class="ui-btn primary ui-corner-all">Save problem</a>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= SETTINGS ======================= -->
+<div data-role="page" id="settings" data-theme="b">
+  <div data-role="header" data-position="fixed" data-tap-toggle="false">
+    <a href="#dashboard" class="ui-btn ui-btn-left ui-icon-arrow-l ui-btn-icon-notext">Back</a>
+    <h1>Settings</h1>
+  </div>
+  <div role="main" class="ui-content">
+    <div class="card">
+      <h3>Profile</h3>
+      <label for="sName">Your name</label>
+      <input type="text" id="sName" placeholder="Sadique">
+      <label for="sGoal">Daily goal (problems)</label>
+      <input type="range" id="sGoal" min="1" max="10" value="3" data-highlight="true">
+      <label for="sMotiv">Motivational messages</label>
+      <select id="sMotiv" data-role="flipswitch"><option value="off">Off</option><option value="on" selected>On</option></select>
+    </div>
+
+    <div class="card">
+      <h3>Data</h3>
+      <a href="#" id="btnSample" class="ui-btn ghost ui-corner-all">Load sample problems</a>
+      <a href="#" id="btnExport" class="ui-btn ghost ui-corner-all">Export as JSON</a>
+      <a href="#" id="btnReset" class="ui-btn danger ui-corner-all">Reset everything</a>
+    </div>
+    <p style="text-align:center;color:var(--mute);font-size:12px">Built with jQuery Mobile 1.4.5 &bull; Practical 06</p>
+  </div>
+
+  <div data-role="popup" id="confirmReset" data-overlay-theme="b">
+    <div class="pop">
+      <h4>Sab kuch delete karna hai?</h4>
+      <p style="color:var(--mute);font-size:13px">Saari problems aur settings hat jayengi.</p>
+      <a href="#" id="doReset" class="ui-btn danger ui-corner-all">Yes, reset</a>
+      <a href="#" class="ui-btn ghost ui-corner-all" data-rel="back">Cancel</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><span id="toastMsg"></span><a href="#" id="toastUndo" style="display:none">UNDO</a></div>
+
+<script>
+/* ============ Data layer (localStorage) ============ */
+var KEY = "preptrack_v1";
+var DB = { problems: [], settings: { name: "", goal: 3, motiv: "on" } };
+var editingId = null, activeId = null, filter = "all", lastDeleted = null, toastTimer;
+
+function load(){ try{ var d = JSON.parse(localStorage.getItem(KEY)); if(d){ DB = d; } }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+function uid(){ return "p" + Date.now() + Math.floor(Math.random()*1000); }
+function today(d){ d = d || new Date(); var m = d.getMonth()+1, day = d.getDate();
+  return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(day<10?"0":"")+day; }
+function esc(s){ return $("<div>").text(s==null?"":s).html(); }
+function byId(id){ for(var i=0;i<DB.problems.length;i++) if(DB.problems[i].id===id) return DB.problems[i]; return null; }
+
+function toast(msg, undo){
+  $("#toastMsg").text(msg); $("#toastUndo").toggle(!!undo);
+  $("#toast").addClass("show"); clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ $("#toast").removeClass("show"); }, undo ? 4500 : 2200);
+}
+
+/* ============ Bottom nav injected into every page ============ */
+var NAV = [["dashboard","Home","home"],["problems","Problems","grid"],["add","Add","plus"],["settings","Settings","gear"]];
+$(document).on("pagebeforecreate", "[data-role=page]", function(){
+  var id = this.id, html = '<div data-role="footer" data-position="fixed" data-tap-toggle="false"><div data-role="navbar"><ul>';
+  NAV.forEach(function(n){
+    html += '<li><a href="#'+n[0]+'" data-icon="'+n[2]+'" data-iconpos="top" class="'+(n[0]===id?'ui-btn-active ui-state-persist':'')+'">'+n[1]+'</a></li>';
+  });
+  $(this).append(html + '</ul></div></div>');
+});
+
+/* ============ DASHBOARD ============ */
+function calcStreak(){
+  var days = {}; DB.problems.forEach(function(p){ if(p.status==="solved" && p.solvedOn) days[p.solvedOn]=1; });
+  var d = new Date(), n = 0;
+  if(!days[today(d)]) d.setDate(d.getDate()-1);        // streak stays alive until end of today
+  while(days[today(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function bars(sel, rows, max, cls){
+  var h = "";
+  rows.forEach(function(r){
+    var pct = max ? Math.round(r[1]/max*100) : 0;
+    h += '<div class="bar '+(cls?r[2]:'')+'"><div class="lbl"><span>'+esc(r[0])+'</span><span>'+r[1]+'</span></div>'+
+         '<div class="track"><div class="fill" style="width:'+pct+'%"></div></div></div>';
+  });
+  $(sel).html(h || '<p style="color:var(--mute);font-size:13px;margin:0">No data yet.</p>');
+}
+function renderDashboard(){
+  var P = DB.problems, S = DB.settings, solved = P.filter(function(p){return p.status==="solved";});
+  var t = today(), todayCount = solved.filter(function(p){return p.solvedOn===t;}).length, goal = +S.goal||3;
+
+  var hr = new Date().getHours(), g = hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  $("#greet").text(g + (S.name ? ", "+S.name : "") + "!");
+  var msg = todayCount>=goal ? "Goal complete! Kya baat hai." : (goal-todayCount)+" Problems to solve today.";
+  $("#goalMsg").text(S.motiv==="on" ? msg : "Daily goal: "+goal);
+  $("#ringNum").text(todayCount+"/"+goal);
+  $("#ringArc").css("stroke-dashoffset", 251.3*(1-Math.min(1,todayCount/goal)));
+
+  $("#stSolved").text(solved.length); $("#stStreak").text(calcStreak());
+  $("#stPending").text(P.length - solved.length);
+
+  var dc = {easy:0,medium:0,hard:0}; solved.forEach(function(p){ dc[p.diff]++; });
+  var dmax = Math.max(dc.easy,dc.medium,dc.hard,1);
+  bars("#diffBars", [["Easy",dc.easy,"easy"],["Medium",dc.medium,"medium"],["Hard",dc.hard,"hard"]], dmax, true);
+
+  var tc = {}; solved.forEach(function(p){ tc[p.topic]=(tc[p.topic]||0)+1; });
+  var rows = Object.keys(tc).map(function(k){return [k,tc[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  bars("#topicBars", rows, rows.length?rows[0][1]:0, false);
+
+  var rec = solved.slice().sort(function(a,b){return (b.solvedAt||0)-(a.solvedAt||0);}).slice(0,4), h = "";
+  rec.forEach(function(p){ h += '<li><a href="#" class="recent" data-id="'+p.id+'"><div class="p-title">'+esc(p.title)+'</div><span class="tag '+p.diff+'">'+p.diff+'</span><span class="tag">'+esc(p.topic)+'</span></a></li>'; });
+  $("#recentList").html(h || '<li style="padding:1em;color:var(--mute);font-size:13px;border:0!important;background:transparent!important">No problems solved yet. Add the first problem!</li>').listview("refresh");
+}
+$(document).on("pagebeforeshow", "#dashboard", renderDashboard);
+$(document).on("click", ".recent", function(e){ e.preventDefault(); openActions($(this).data("id")); });
+
+/* ============ PROBLEMS LIST ============ */
+function renderList(){
+  var q = ($("#q").val()||"").toLowerCase(), h = "", n = 0;
+  DB.problems.slice().sort(function(a,b){return b.createdAt-a.createdAt;}).forEach(function(p){
+    if(filter!=="all" && p.status!==filter) return;
+    if(q && (p.title+" "+p.topic).toLowerCase().indexOf(q)<0) return;
+    n++;
+    h += '<li class="'+(p.status==="solved"?"done":"")+'"><a href="#" class="prow" data-id="'+p.id+'">'+
+         '<div class="p-title">'+esc(p.title)+'</div>'+
+         '<span class="tag '+p.diff+'">'+p.diff+'</span><span class="tag">'+esc(p.topic)+'</span><span class="tag '+p.status+'">'+p.status+'</span></a></li>';
+  });
+  $("#problemList").html(h).listview("refresh");
+  $("#emptyBox").toggle(n===0);
+}
+$(document).on("pagebeforeshow", "#problems", renderList);
+$(document).on("input keyup", "#q", renderList);
+$(document).on("click", "#statusFilter a", function(e){
+  e.preventDefault(); filter = $(this).data("f");
+  $("#statusFilter a").removeClass("ui-btn-active"); $(this).addClass("ui-btn-active"); renderList();
+});
+$(document).on("click", ".prow", function(e){ e.preventDefault(); openActions($(this).data("id")); });
+
+/* swipe right = quick solve */
+$(document).on("swiperight", ".prow", function(){
+  var p = byId($(this).data("id")); if(p && p.status!=="solved"){ setStatus(p,"solved"); renderList(); toast("Solved! \u2705"); }
+});
+
+function openActions(id){
+  activeId = id; var p = byId(id); if(!p) return;
+  $("#actTitle").text(p.title);
+  var pop = $("#actions");
+  if($.mobile.activePage.attr("id")!=="problems"){ $.mobile.changePage("#problems"); setTimeout(function(){ pop.popup("open"); },400); }
+  else pop.popup("open");
+}
+function setStatus(p, st){
+  p.status = st;
+  if(st==="solved"){ p.solvedOn = today(); p.solvedAt = Date.now(); } else { p.solvedOn = null; p.solvedAt = null; }
+  save();
+}
+$(document).on("click", "#actions [data-act]", function(e){
+  e.preventDefault();
+  var act = $(this).data("act"), p = byId(activeId); if(!p) return;
+  $("#actions").popup("close");
+  setTimeout(function(){
+    if(act==="solved"||act==="revisit"||act==="todo"){ setStatus(p,act); renderList(); toast("Marked as "+act); }
+    else if(act==="open"){ if(p.link) window.open(p.link,"_blank"); else toast("Is problem ka link nahi hai"); }
+    else if(act==="edit"){ editingId = p.id; $.mobile.changePage("#add", {transition:"slideup"}); }
+    else if(act==="delete"){
+      lastDeleted = p; DB.problems = DB.problems.filter(function(x){return x.id!==p.id;}); save(); renderList(); toast("Deleted", true);
+    }
+  }, 200);
+});
+$(document).on("click", "#toastUndo", function(e){
+  e.preventDefault();
+  if(lastDeleted){ DB.problems.push(lastDeleted); lastDeleted = null; save(); $("#toast").removeClass("show"); if($.mobile.activePage.attr("id")==="problems") renderList(); }
+});
+
+/* ============ ADD / EDIT ============ */
+function setRadio(name, val){ $("input[name="+name+"][value="+val+"]").prop("checked", true); $("input[name="+name+"]").checkboxradio("refresh"); }
+$(document).on("pagebeforeshow", "#add", function(){
+  var p = editingId ? byId(editingId) : null;
+  $("#addTitle").text(p ? "Edit Problem" : "Add Problem");
+  $("#fTitle").val(p?p.title:""); $("#fLink").val(p?p.link:""); $("#fNotes").val(p?p.notes:"");
+  $("#fTopic").val(p?p.topic:"Arrays").selectmenu("refresh");
+  setRadio("diff", p?p.diff:"easy"); setRadio("stat", p?p.status:"todo");
+});
+$(document).on("pagehide", "#add", function(){ editingId = null; });
+$(document).on("click", "#btnSave", function(e){
+  e.preventDefault();
+  var title = $.trim($("#fTitle").val());
+  if(!title){ toast("Title likhna zaroori hai"); $("#fTitle").focus(); return; }
+  var st = $("input[name=stat]:checked").val(), p = editingId ? byId(editingId) : null;
+  if(!p){ p = { id: uid(), createdAt: Date.now() }; DB.problems.push(p); }
+  p.title = title; p.link = $.trim($("#fLink").val()); p.topic = $("#fTopic").val();
+  p.diff = $("input[name=diff]:checked").val(); p.notes = $("#fNotes").val();
+  if(st==="solved" && p.status!=="solved"){ p.solvedOn = today(); p.solvedAt = Date.now(); }
+  if(st!=="solved"){ p.solvedOn = null; p.solvedAt = null; }
+  p.status = st; save();
+  toast(editingId ? "Updated \u2705" : "Added \u2705");
+  editingId = null;
+  $.mobile.changePage("#problems", {transition:"slidedown"});
+});
+
+/* ============ SETTINGS ============ */
+$(document).on("pagebeforeshow", "#settings", function(){
+  var S = DB.settings;
+  $("#sName").val(S.name); $("#sGoal").val(S.goal).slider("refresh"); $("#sMotiv").val(S.motiv).flipswitch("refresh");
+});
+$(document).on("change input", "#sName", function(){ DB.settings.name = $.trim($(this).val()); save(); });
+$(document).on("change", "#sGoal", function(){ DB.settings.goal = +$(this).val(); save(); });
+$(document).on("change", "#sMotiv", function(){ DB.settings.motiv = $(this).val(); save(); });
+
+var SAMPLE = [
+  ["Two Sum","Arrays","easy"],["Valid Parentheses","Stack & Queue","easy"],["Merge Two Sorted Lists","Linked List","easy"],
+  ["Longest Substring Without Repeating","Strings","medium"],["Binary Tree Level Order Traversal","Trees","medium"],
+  ["Number of Islands","Graphs","medium"],["Coin Change","Dynamic Programming","medium"],["Merge k Sorted Lists","Heap","hard"]
+];
+$(document).on("click", "#btnSample", function(e){
+  e.preventDefault();
+  SAMPLE.forEach(function(s,i){
+    DB.problems.push({id:uid()+i, title:s[0], topic:s[1], diff:s[2], status:"todo", link:"", notes:"", createdAt:Date.now()-i});
+  });
+  save(); toast("8 sample problems add hue");
+});
+$(document).on("click", "#btnExport", function(e){
+  e.preventDefault();
+  var blob = new Blob([JSON.stringify(DB,null,2)], {type:"application/json"}), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "preptrack-backup.json"; document.body.appendChild(a); a.click(); a.remove();
+  toast("Backup download ho gaya");
+});
+$(document).on("click", "#btnReset", function(e){ e.preventDefault(); $("#confirmReset").popup("open"); });
+$(document).on("click", "#doReset", function(e){
+  e.preventDefault(); DB = { problems: [], settings: { name: "", goal: 3, motiv: "on" } }; save();
+  $("#confirmReset").popup("close"); toast("Reset complete");
+  setTimeout(function(){ $.mobile.changePage("#dashboard"); }, 300);
+});
+
+/* ============ Init ============ */
+load();
+$(document).on("mobileinit", function(){ $.mobile.defaultPageTransition = "fade"; });
+</script>
+</body>
+</html>
